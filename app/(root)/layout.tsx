@@ -1,20 +1,29 @@
-import { requireAuth } from "@/modules/authentication/actions";
+import Header from "@/components/header";
+import { currentUser } from "@/modules/authentication/actions";
 import ChatSidebar from "@/modules/chat/components/chat-sidebar";
 import React from "react";
+import { auth } from "@/lib/auth";
+import { getAllChats } from "@/modules/chat/actions";
 
-export default async function Layout({
-  children,
+const Layout= async({
+  children
 }: {
-  children: React.ReactNode;
-}) {
-  await requireAuth();
+  children: React.ReactNode
+}) => {
+  const session = await currentUser();
+
+  const {data:chats} = await getAllChats();
+
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <ChatSidebar />
+      <ChatSidebar user={session?.user} chats={chats}/>
       <main className="flex-1 overflow-hidden">
+        <Header/>
         {children}
       </main>
     </div>
   );
 }
+
+export default Layout

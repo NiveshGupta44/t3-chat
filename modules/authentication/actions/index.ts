@@ -1,59 +1,36 @@
 "use server";
 
-import { prisma } from "@/lib/db";
+import db from "@/lib/db";
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers"
-import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 
-
-export const currentUser = async()=>{
+export const currentUser = async () => {
+  try {
     const session = await auth.api.getSession({
-        headers:await headers()
-    })
+      headers: await headers(),
+    });
 
-    if(!session){
-        return null
+    if (!session?.user?.id) {
+      return null;
     }
 
-    const user = await prisma.user.findUnique({
-        where: {
-            id: session?.user?.id,
-        },
-    
-    select:{
+    const user = await db.user.findUnique({
+      where: {
+        id: session.user.id,
+      },
+      select: {
         id: true,
         email: true,
         name: true,
         image: true,
-        createdAt:true,
-        updatedAt: true, 
-         
-    },
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     return user;
-};
-
-export const requireAuth = async()=>{
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
-
-    if(!session){
-        return redirect("/sign-in")
-    }
-
-    return session
-}
-
-export const requireUnAuth = async()=>{
-    const session = await auth.api.getSession({
-        headers: await headers(),
-    });
-
-    if(session){
-        return redirect("/")
-    }
-
+  } catch (error) {
+     console.error("Error fetching current user:", error);
     return null;
-}
+  }
+};
