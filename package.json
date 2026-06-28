@@ -9,7 +9,9 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ai-sdk/react": "^4.0.5",
     "@base-ui/react": "^1.6.0",
+    "@openrouter/ai-sdk-provider": "^2.10.0",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "@radix-ui/react-use-controllable-state": "^1.2.3",
@@ -21,7 +23,7 @@
     "@tabler/icons-react": "^3.44.0",
     "@tanstack/react-query": "^5.101.1",
     "@xyflow/react": "^12.11.1",
-    "ai": "^7.0.3",
+    "ai": "^6.0.214",
     "ansi-to-react": "^6.2.6",
     "better-auth": "^1.6.20",
     "class-variance-authority": "^0.7.1",
