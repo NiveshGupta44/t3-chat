@@ -11,7 +11,7 @@ const provider = createOpenRouter({
 function convertStoredMessageToUI(msg: any) {
   try {
     const parts = JSON.parse(msg.content);
-    const validParts = parts.filter((part) => part.type === "text");
+    const validParts = parts.filter((part: any) => part.type === "text");
 
     if (validParts.length === 0) return null;
 
