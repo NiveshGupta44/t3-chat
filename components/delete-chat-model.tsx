@@ -1,21 +1,34 @@
 "use client";
 import Modal from "@/components/ui/modal";
-import { useDeleteChat } from "../../hooks/chat";
+import { useDeleteChat } from "@/modules/chat/hooks/chat";
+import { useRouter } from "next/navigation";
 
-import React from "react";
+import React, { startTransition, useEffect } from "react";
 import { toast } from "sonner";
 
 const DeleteChatModal = ({ isModalOpen, setIsModalOpen, chatId }) => {
   const { mutateAsync, isPending } = useDeleteChat(chatId);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isModalOpen) {
+      document.body.style.pointerEvents = "";
+    }
+  }, [isModalOpen]);
+
+  if (!chatId) return null;
 
   const handleDelete = async () => {
     try {
-      await mutateAsync();
-      toast.success("Chat Deleted Successfully");
+      await mutateAsync(chatId);
+      toast.success("Chat Deleted");
+      startTransition(() => {
+        router.push("/");
+      });
+    } catch (e) {
+      console.error("Delete failed:", e); 
+    } finally {
       setIsModalOpen(false);
-    } catch (error) {
-      toast.error("Failed to delete chat");
-      console.error("Failed to delete chat:", error);
     }
   };
 

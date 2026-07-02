@@ -2,28 +2,28 @@ import Header from "@/components/header";
 import { currentUser } from "@/modules/authentication/actions";
 import ChatSidebar from "@/modules/chat/components/chat-sidebar";
 import React from "react";
-import { auth } from "@/lib/auth";
 import { getAllChats } from "@/modules/chat/actions";
 
-const Layout= async({
-  children
+const Layout = async ({
+  children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) => {
   const session = await currentUser();
 
-  const {data:chats} = await getAllChats();
+  const result = await getAllChats();
 
+  const chats = result.success ? result.data ?? [] : [];
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <ChatSidebar user={session?.user} chats={chats}/>
+      <ChatSidebar user={session} chats={chats} />
       <main className="flex-1 overflow-hidden">
-        <Header/>
+        <Header />
         {children}
       </main>
     </div>
   );
-}
+};
 
-export default Layout
+export default Layout;

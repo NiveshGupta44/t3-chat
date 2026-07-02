@@ -3,6 +3,7 @@
 import db from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 
 export const currentUser = async () => {
   try {
@@ -30,7 +31,14 @@ export const currentUser = async () => {
 
     return user;
   } catch (error) {
-     console.error("Error fetching current user:", error);
+    console.error("Error fetching current user:", error);
     return null;
+  }
+};
+export const requireUnAuth = async () => {
+  const user = await currentUser();
+
+  if (user) {
+    redirect("/");
   }
 };

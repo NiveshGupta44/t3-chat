@@ -47,13 +47,14 @@ const CHAT_TAB_MESSAGE = [
 ];
 const ChatWelcomeTabs = ({ userName, onMessageSelect }) => {
   const [activeTab, setActiveTab] = useState(0);
+  const firstName = userName?.split(" ")[0] ?? "there";
 
   return (
     <div className="flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-3xl space-y-8">
+
         <h1 className="text-4xl font-semibold">
-          How can i help you ,{" "}
-          {userName.slice(0, userName.indexOf(" ")) || userName}?
+          How can I help you, {firstName}?
         </h1>
 
         <div className="flex flex-wrap gap-2 w-full">
@@ -73,13 +74,13 @@ const ChatWelcomeTabs = ({ userName, onMessageSelect }) => {
         <div className="space-y-3 w-full min-h-[240px]">
           {CHAT_TAB_MESSAGE[activeTab].messages.map((message, index) => (
             <div key={index}>
-                <button
-                onClick={()=>onMessageSelect(message)}
-                   className="w-full text-left text-sm text-muted-foreground hover:text-primary transition-colors duration-300 ease-in-out py-2"
-                >
-                    {message}
-                </button>
-                  {index < CHAT_TAB_MESSAGE[activeTab].messages.length - 1 && (
+              <button
+                onClick={() => onMessageSelect(message)}
+                className="w-full text-left text-sm text-muted-foreground hover:text-primary transition-colors duration-300 ease-in-out py-2"
+              >
+                {message}
+              </button>
+              {index < CHAT_TAB_MESSAGE[activeTab].messages.length - 1 && (
                 <Separator />
               )}
             </div>

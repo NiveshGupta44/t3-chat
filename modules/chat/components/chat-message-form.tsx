@@ -84,7 +84,7 @@ const ChatMessageForm = ({ initialMessage, onMessageChange }) => {
             >
               {isChatPending ? (
                 <>
-                <Spinner/>
+                  <Spinner />
                 </>
               ) : (
                 <>

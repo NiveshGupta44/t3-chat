@@ -1,7 +1,7 @@
-import {convertToModelMessages , streamText} from "ai";
-import {CHAT_SYSTEM_PROMPT} from "@/lib/prompt";
+import { convertToModelMessages, streamText, createIdGenerator, type UIMessage } from "ai";
+import { CHAT_SYSTEM_PROMPT } from "@/lib/prompt";
 import db from "@/lib/db";
-import { MessageRole, MessageType } from "@/lib/generated/prisma/enums";
+import { MessageRole, MessageType } from "@prisma/client";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider"
 
 const provider = createOpenRouter({
@@ -42,20 +42,26 @@ function extractPartsAsJSON(message) {
 
 export async function POST(req) {
   try {
+    const body = await req.json();
+
+    console.log("Incoming body:", JSON.stringify(body, null, 2));
+
     const {
       chatId,
       messages: newMessages,
       model,
       skipUserMessage,
-    } = await req.json();
+    } = body;
+
+    // rest of your code...
 
     const previousMessages = chatId
       ? await db.message.findMany({
-          where: { chatId },
-          orderBy: {
-            createdAt: "asc",
-          },
-        })
+        where: { chatId },
+        orderBy: {
+          createdAt: "asc",
+        },
+      })
       : [];
 
     const uiMessages = previousMessages
@@ -64,14 +70,16 @@ export async function POST(req) {
 
     const normalizedNewMessages = Array.isArray(newMessages)
       ? newMessages
-      : [newMessages];
+      : newMessages
+        ? [newMessages]
+        : [];
 
-    const allUIMessages = [...uiMessages, ...normalizedNewMessages];
+    const allUIMessages = [...uiMessages, ...normalizedNewMessages].filter(Boolean);
 
     let modelMessages;
 
     try {
-      modelMessages = convertToModelMessages(allUIMessages);
+      modelMessages = await convertToModelMessages(allUIMessages);
     } catch (conversionError) {
       modelMessages = allUIMessages
         .map((msg) => ({
@@ -84,16 +92,20 @@ export async function POST(req) {
         .filter((m) => m.content);
     }
 
+    console.log("UI Messages:", allUIMessages);
+    console.log("Model Messages:", modelMessages);
     const result = streamText({
       model: provider.chat(model),
       messages: modelMessages,
       system: CHAT_SYSTEM_PROMPT,
     });
 
+    result.consumeStream();
     return result.toUIMessageStreamResponse({
       sendReasoning: true,
       originalMessages: allUIMessages,
       onFinish: async ({ responseMessage }) => {
+
         try {
           const messagesToSave = [];
 
@@ -114,7 +126,11 @@ export async function POST(req) {
             }
           }
 
-          if (responseMessage?.parts && responseMessage.parts.length > 0) {
+          const hasRealContent = responseMessage?.parts?.some(
+            (p) => p.type === "text" || p.type === "reasoning"
+          );
+
+          if (hasRealContent) {
             const assistantPartsJSON = extractPartsAsJSON(responseMessage);
 
             messagesToSave.push({

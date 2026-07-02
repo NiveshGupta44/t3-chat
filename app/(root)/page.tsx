@@ -10,7 +10,7 @@ export default async function Home() {
 
   return (
     <>
-    <ChatMessageView user={user}/>
+      <ChatMessageView user={user} />
     </>
   );
 }

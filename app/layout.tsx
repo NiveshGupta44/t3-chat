@@ -4,8 +4,9 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { Toaster } from "sonner";
 
-const dmSans = DM_Sans({subsets:['latin'],variable:'--font-sans'});
+const dmSans = DM_Sans({ subsets: ['latin'], variable: '--font-sans' });
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,16 +35,18 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">
-         <QueryProvider>
+        <QueryProvider>
 
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
-          >{children}</ThemeProvider>
-         </QueryProvider>
-        </body>
+          >{children}
+            <Toaster />
+          </ThemeProvider>
+        </QueryProvider>
+      </body>
     </html>
   );
 }

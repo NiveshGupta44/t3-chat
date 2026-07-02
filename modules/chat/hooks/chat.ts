@@ -16,7 +16,7 @@ export const useCreateChat = () => {
         const chat = res.data;
 
         queryClient.invalidateQueries({
-          queryKey:["chats"]
+          queryKey: ["chats"]
         });
 
         router.push(`/chat/${chat.id}?autoTrigger=true`);
@@ -30,28 +30,29 @@ export const useCreateChat = () => {
 };
 
 
-export const useDeleteChat = (chatId)=>{
+export const useDeleteChat = () => {
   const queryClient = useQueryClient();
 
-  const router = useRouter();
-
   return useMutation({
-    mutationFn:()=>deleteChat(chatId),
-    onSuccess:()=>{
-      queryClient.invalidateQueries(
-        {
-          queryKey:["chats"]
-        })
+    mutationFn: async (chatId: string) => {  
+      const res = await deleteChat(chatId);
+      if (!res.success) {
+        throw new Error(res.message); 
+      }
+      return res;
     },
-    onError:()=>{
-      toast.error("Failed to delete chat")
-    }
-  })
-}
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chats"] });
+    },
+    onError: () => {
+      toast.error("Failed to delete chat");
+    },
+  });
+};
 
-export const useGetChatById = (chatId)=>{
+export const useGetChatById = (chatId) => {
   return useQuery({
-    queryKey:["chats" , chatId],
-    queryFn:()=>getChatById(chatId)
+    queryKey: ["chats", chatId],
+    queryFn: () => getChatById(chatId)
   })
 }

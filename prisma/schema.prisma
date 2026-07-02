@@ -1,15 +1,11 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
-  provider = "prisma-client"
-  output   = "../lib/generated/prisma"
+  provider = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model Test {
@@ -20,23 +16,22 @@ model Test {
 model User {
   id            String    @id
   name          String
-  email         String
+  email         String    @unique
   emailVerified Boolean   @default(false)
   image         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  sessions      Session[]
   accounts      Account[]
   chats         Chat[]
+  sessions      Session[]
 
-  @@unique([email])
   @@map("user")
 }
 
 model Session {
   id        String   @id
   expiresAt DateTime
-  token     String
+  token     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   ipAddress String?
@@ -44,7 +39,6 @@ model Session {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([token])
   @@index([userId])
   @@map("session")
 }
@@ -54,7 +48,6 @@ model Account {
   accountId             String
   providerId            String
   userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   accessToken           String?
   refreshToken          String?
   idToken               String?
@@ -64,6 +57,7 @@ model Account {
   password              String?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("account")
@@ -81,48 +75,43 @@ model Verification {
   @@map("verification")
 }
 
-model Chat{
-  id String @id @default(cuid())
-  title String
-  model String
+model Chat {
+  id        String    @id @default(cuid())
+  title     String
+  model     String
+  userId    String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  Message[]
 
-  userId String
-  user User @relation(fields: [userId] , references: [id], onDelete: Cascade)
-
-  messages Message[]
-
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@index([userId , updatedAt])
+  @@index([userId, updatedAt])
   @@map("chat")
 }
 
-enum MessageRole{
-  USER
-  ASSISTANT
-}
-
-
-enum MessageType{
-  NORMAL
-  ERROR
-  TOOL_CALL
-}
-
-model Message{
-  id String @id @default(cuid())
-  messageRole MessageRole @default(USER)
-  MessageType MessageType @default(NORMAL)
-  content String @db.Text
-  model String?
+model Message {
+  id     String @id @default(cuid())
   chatId String
-  chat Chat @relation(fields: [chatId], references: [id], onDelete: Cascade)
-
-  createdAt DateTime @default (now())
-  updatedAt DateTime @updatedAt
+  chat   Chat   @relation(fields: [chatId], references: [id], onDelete: Cascade) 
+  messageRole MessageRole @default(USER)
+  content     String
+  model       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  messageType MessageType @default(NORMAL)
+  
 
   @@index([chatId, createdAt])
   @@map("message")
 }
 
+enum MessageRole {
+  USER
+  ASSISTANT
+}
+
+enum MessageType {
+  NORMAL
+  ERROR
+  TOOL_CALL
+}

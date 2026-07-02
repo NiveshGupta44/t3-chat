@@ -1,11 +1,11 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '@prisma/client'
+import { PrismaNeon } from '@prisma/adapter-neon'
 
-const db = globalThis.prisma || new PrismaClient({
-     log: ['query', 'info', 'warn', 'error'], 
-})
+const adapter = new PrismaNeon({ connectionString: process.env.DATABASE_URL })
+const db = globalThis.prisma || new PrismaClient({ adapter })
 
-if(process.env.NODE_ENV === "development") {
-    globalThis.prisma = db;
+if (process.env.NODE_ENV === "development") {
+  globalThis.prisma = db
 }
 
 export default db
