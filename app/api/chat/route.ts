@@ -31,7 +31,7 @@ function convertStoredMessageToUI(msg: any) {
   }
 }
 
-function extractPartsAsJSON(message) {
+function extractPartsAsJSON(message : any) {
   if (message.parts && Array.isArray(message.parts)) {
     return JSON.stringify(message.parts);
   }
@@ -40,7 +40,7 @@ function extractPartsAsJSON(message) {
   return JSON.stringify([{ type: "text", text: content }]);
 }
 
-export async function POST(req) {
+export async function POST(req: Request) {
   try {
     const body = await req.json();
 
@@ -66,7 +66,7 @@ export async function POST(req) {
 
     const uiMessages = previousMessages
       .map(convertStoredMessageToUI)
-      .filter((msg) => msg !== null);
+      .filter((msg : any) => msg !== null);
 
     const normalizedNewMessages = Array.isArray(newMessages)
       ? newMessages
@@ -82,11 +82,11 @@ export async function POST(req) {
       modelMessages = await convertToModelMessages(allUIMessages);
     } catch (conversionError) {
       modelMessages = allUIMessages
-        .map((msg) => ({
+        .map((msg : any) => ({
           role: msg.role,
           content: msg.parts
-            .filter((p) => p.type === "text")
-            .map((p) => p.text)
+            .filter((p : any) => p.type === "text")
+            .map((p : any) => p.text)
             .join("\n"),
         }))
         .filter((m) => m.content);
