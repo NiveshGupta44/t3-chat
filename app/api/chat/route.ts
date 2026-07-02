@@ -127,7 +127,7 @@ export async function POST(req: Request) {
           }
 
           const hasRealContent = responseMessage?.parts?.some(
-            (p) => p.type === "text" || p.type === "reasoning"
+            (p: any) => p.type === "text" || p.type === "reasoning"
           );
 
           if (hasRealContent) {
