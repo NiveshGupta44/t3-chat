@@ -8,7 +8,7 @@ const provider = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
 });
 
-function convertStoredMessageToUI(msg) {
+function convertStoredMessageToUI(msg: any) {
   try {
     const parts = JSON.parse(msg.content);
     const validParts = parts.filter((part) => part.type === "text");
