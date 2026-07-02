@@ -26,11 +26,17 @@ import {
 import { useChatStore } from "../store/chat-store";
 import DeleteChatModal from "@/components/delete-chat-model";
 
-interface ChatSidebarProps {
-  user: User;
-  chats: Chat[];
+import { User, Chat, Message } from "@prisma/client";
+
+interface ChatWithMessages extends Chat {
+  messages?: Message[];
 }
-const ChatSidebar = ({ user, chats = [] }) => {
+
+interface ChatSidebarProps {
+  user: User | null;
+  chats: ChatWithMessages[];
+}
+const ChatSidebar = ({ user, chats = [] }: ChatSidebarProps) => {
   const { activeChatId } = useChatStore();
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
@@ -62,7 +68,12 @@ const ChatSidebar = ({ user, chats = [] }) => {
     const lastWeek = new Date(today);
     lastWeek.setDate(lastWeek.getDate() - 7);
 
-    const groups = {
+    const groups: {
+      today: ChatWithMessages[];
+      yesterday: ChatWithMessages[];
+      lastWeek: ChatWithMessages[];
+      older: ChatWithMessages[];
+    } = {
       today: [],
       yesterday: [],
       lastWeek: [],
@@ -87,7 +98,7 @@ const ChatSidebar = ({ user, chats = [] }) => {
   }, [filteredChats]);
 
 
-  const handleSearchChange = (e) => {
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
 
@@ -96,7 +107,7 @@ const ChatSidebar = ({ user, chats = [] }) => {
     setIsModalOpen(true);
   };
 
-  const renderChatList = (chatList) => {
+  const renderChatList = (chatList: ChatWithMessages[]) => {
     if (chatList.length === 0) return null;
 
     return chatList.map((chat) => (

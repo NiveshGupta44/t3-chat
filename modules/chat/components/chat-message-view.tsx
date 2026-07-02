@@ -3,11 +3,17 @@ import React, { useState } from "react";
 import ChatWelcomeTabs from "./chat-welcome-tabs";
 import ChatMessageForm from "./chat-message-form";
 
-const ChatMessageView = ({ user }) => {
+import { User } from "@prisma/client";
+
+interface ChatMessageViewProps {
+  user: User | null;
+}
+
+const ChatMessageView = ({ user }: ChatMessageViewProps) => {
 
     const [selectedMessage, setSelectedMessage] = useState("")
 
-    const handleMessageSelect = (messsage) => {
+    const handleMessageSelect = (messsage: string) => {
         setSelectedMessage(messsage)
     }
 

@@ -1,14 +1,14 @@
 import { convertToModelMessages, streamText, createIdGenerator, type UIMessage } from "ai";
 import { CHAT_SYSTEM_PROMPT } from "@/lib/prompt";
 import db from "@/lib/db";
-import { MessageRole, MessageType } from "@prisma/client";
+import { Message, MessageRole, MessageType } from "@prisma/client";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider"
 
 const provider = createOpenRouter({
   apiKey: process.env.OPENROUTER_API_KEY,
 });
 
-function convertStoredMessageToUI(msg: any) {
+function convertStoredMessageToUI(msg: Message) {
   try {
     const parts = JSON.parse(msg.content);
     const validParts = parts.filter((part: any) => part.type === "text");
@@ -31,7 +31,7 @@ function convertStoredMessageToUI(msg: any) {
   }
 }
 
-function extractPartsAsJSON(message : any) {
+function extractPartsAsJSON(message: any) {
   if (message.parts && Array.isArray(message.parts)) {
     return JSON.stringify(message.parts);
   }
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
 
     const uiMessages = previousMessages
       .map(convertStoredMessageToUI)
-      .filter((msg : any) => msg !== null);
+      .filter((msg: any) => msg !== null);
 
     const normalizedNewMessages = Array.isArray(newMessages)
       ? newMessages
@@ -82,14 +82,14 @@ export async function POST(req: Request) {
       modelMessages = await convertToModelMessages(allUIMessages);
     } catch (conversionError) {
       modelMessages = allUIMessages
-        .map((msg : any) => ({
+        .map((msg: any) => ({
           role: msg.role,
           content: msg.parts
-            .filter((p : any) => p.type === "text")
-            .map((p : any) => p.text)
+            .filter((p: any) => p.type === "text")
+            .map((p: any) => p.text)
             .join("\n"),
         }))
-        .filter((m) => m.content);
+        .filter((m: any) => m.content);
     }
 
     console.log("UI Messages:", allUIMessages);

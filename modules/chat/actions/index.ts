@@ -5,7 +5,7 @@ import { currentUser } from "@/modules/authentication/actions";
 import { MessageRole, MessageType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
-export const createChatWithMessage = async (values) => {
+export const createChatWithMessage = async (values: { content: string; model: string }) => {
   try {
     const user = await currentUser();
 
@@ -88,7 +88,7 @@ export const getAllChats = async () => {
   }
 };
 
-export const getChatById = async (chatId) => {
+export const getChatById = async (chatId: string) => {
   const user = await currentUser();
 
   if (!user) {
@@ -124,7 +124,7 @@ export const getChatById = async (chatId) => {
 }
 
 
-export const deleteChat = async (chatId) => {
+export const deleteChat = async (chatId: string) => {
   try {
     const user = await currentUser();
     console.log("deleteChat — chatId:", chatId, "user:", user?.id); 

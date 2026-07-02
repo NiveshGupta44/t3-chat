@@ -24,22 +24,27 @@ export function ModelSelector({
   models,
   selectedModelId,
   onModelSelect,
-  className,
+  className = "",
+}: {
+  models: any;
+  selectedModelId: any;
+  onModelSelect: any;
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
-  const [selectedForDetails, setSelectedForDetails] = useState(null);
+  const [selectedForDetails, setSelectedForDetails] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const selectedModel = models.find((m) => m.id === selectedModelId);
+  const selectedModel = (models || []).find((m: any) => m.id === selectedModelId);
 
-  const formatContextLength = (length) => {
+  const formatContextLength = (length: any) => {
     if (length >= 1000000) return `${(length / 1000000).toFixed(1)}M`;
     if (length >= 1000) return `${(length / 1000).toFixed(0)}K`;
     return length.toString();
   };
 
-  const isFreeModel = (model) => {
+  const isFreeModel = (model: any) => {
     return (
       model.pricing.prompt === "0" &&
       model.pricing.completion === "0" &&
@@ -47,13 +52,13 @@ export function ModelSelector({
     );
   };
 
-  const openModelDetails = (model, e) => {
+  const openModelDetails = (model: any, e: any) => {
     e.stopPropagation();
     setSelectedForDetails(model);
     setDetailsOpen(true);
   };
 
-  const filteredModels = models.filter((model) => {
+  const filteredModels = (models || []).filter((model: any) => {
     const query = searchQuery.toLowerCase();
     return (
       model.name.toLowerCase().includes(query) ||
@@ -108,7 +113,7 @@ export function ModelSelector({
                 No models found matching "{searchQuery}"
               </div>
             ) : (
-              filteredModels.map((model) => (
+              filteredModels.map((model: any) => (
                 <div
                   key={model.id}
                   className={cn(
@@ -256,7 +261,7 @@ export function ModelSelector({
                       </p>
                       <div className="flex flex-wrap gap-1">
                         {selectedForDetails.architecture.input_modalities.map(
-                          (modality) => (
+                          (modality: any) => (
                             <Badge
                               key={modality}
                               variant="outline"
@@ -274,7 +279,7 @@ export function ModelSelector({
                       </p>
                       <div className="flex flex-wrap gap-1">
                         {selectedForDetails.architecture.output_modalities.map(
-                          (modality) => (
+                          (modality: any) => (
                             <Badge
                               key={modality}
                               variant="outline"
@@ -306,7 +311,7 @@ export function ModelSelector({
                   ) : (
                     <div className="grid grid-cols-2 gap-3">
                       {Object.entries(selectedForDetails.pricing).map(
-                        ([key, value]) => {
+                        ([key, value]: [string, any]) => {
                           if (value === "0") return null;
                           return (
                             <div key={key} className="space-y-1">

@@ -42,3 +42,13 @@ export const requireUnAuth = async () => {
     redirect("/");
   }
 };
+
+export const requireAuth = async () => {
+  const user = await currentUser();
+
+  if (!user) {
+    redirect("/sign-in");
+  }
+
+  return user;
+};

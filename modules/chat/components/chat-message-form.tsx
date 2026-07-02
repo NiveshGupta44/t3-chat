@@ -10,7 +10,12 @@ import { ModelSelector } from "./model-selector";
 import { useCreateChat } from "../hooks/chat";
 import { toast } from "sonner";
 
-const ChatMessageForm = ({ initialMessage, onMessageChange }) => {
+interface ChatMessageFormProps {
+  initialMessage?: string;
+  onMessageChange?: (msg: string) => void;
+}
+
+const ChatMessageForm = ({ initialMessage, onMessageChange }: ChatMessageFormProps) => {
   const { data: models, isPending } = useAIModels();
 
   const [selectedModel, setSelectedModel] = useState(models?.models[0]?.id);
@@ -24,7 +29,7 @@ const ChatMessageForm = ({ initialMessage, onMessageChange }) => {
     }
   }, [initialMessage, onMessageChange]);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: React.FormEvent | React.KeyboardEvent) => {
     try {
       e.preventDefault();
       await mutateAsync({ content: message, model: selectedModel });

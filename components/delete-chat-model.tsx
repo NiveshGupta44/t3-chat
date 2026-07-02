@@ -6,8 +6,14 @@ import { useRouter } from "next/navigation";
 import React, { startTransition, useEffect } from "react";
 import { toast } from "sonner";
 
-const DeleteChatModal = ({ isModalOpen, setIsModalOpen, chatId }) => {
-  const { mutateAsync, isPending } = useDeleteChat(chatId);
+interface DeleteChatModalProps {
+  isModalOpen: boolean;
+  setIsModalOpen: (open: boolean) => void;
+  chatId: string | null;
+}
+
+const DeleteChatModal = ({ isModalOpen, setIsModalOpen, chatId }: DeleteChatModalProps) => {
+  const { mutateAsync, isPending } = useDeleteChat();
   const router = useRouter();
 
   useEffect(() => {

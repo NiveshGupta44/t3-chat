@@ -1,5 +1,5 @@
 import Header from "@/components/header";
-import { currentUser } from "@/modules/authentication/actions";
+import { requireAuth } from "@/modules/authentication/actions";
 import ChatSidebar from "@/modules/chat/components/chat-sidebar";
 import React from "react";
 import { getAllChats } from "@/modules/chat/actions";
@@ -9,7 +9,7 @@ const Layout = async ({
 }: {
   children: React.ReactNode;
 }) => {
-  const session = await currentUser();
+  const session = await requireAuth();
 
   const result = await getAllChats();
 

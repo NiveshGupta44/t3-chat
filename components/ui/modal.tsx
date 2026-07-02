@@ -11,7 +11,22 @@ import { Button } from '@/components/ui/button'
 
 
 
-const Modal= ({
+interface ModalProps {
+  children: React.ReactNode;
+  title: string;
+  description?: string;
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit?: () => void;
+  submitText?: string;
+  cancelText?: string;
+  showFooter?: boolean;
+  submitVariant?: string;
+  size?: string;
+  className?: string;
+}
+
+const Modal = ({
   children,
   title,
   description,
@@ -22,9 +37,9 @@ const Modal= ({
   cancelText = 'Cancel',
   showFooter = true,
   submitVariant = "default",
-  size,
+  size = '',
   className = ''
-}) => {
+}: ModalProps) => {
   const handleSubmit = () => {
     if (onSubmit) {
       onSubmit()

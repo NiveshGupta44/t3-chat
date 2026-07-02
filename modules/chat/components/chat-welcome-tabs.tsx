@@ -45,7 +45,11 @@ const CHAT_TAB_MESSAGE = [
     ],
   },
 ];
-const ChatWelcomeTabs = ({ userName, onMessageSelect }) => {
+interface ChatWelcomeTabsProps {
+  userName?: string | null;
+  onMessageSelect: (message: string) => void;
+}
+const ChatWelcomeTabs = ({ userName, onMessageSelect }: ChatWelcomeTabsProps) => {
   const [activeTab, setActiveTab] = useState(0);
   const firstName = userName?.split(" ")[0] ?? "there";
 

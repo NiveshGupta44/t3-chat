@@ -201,9 +201,9 @@ const ChatWithMessages = ({ chatId, chatData }: Props) => {
                 Start a conversation...
               </div>
             ) : (
-              messageToRender.map((message) => (
+              messageToRender.map((message: any) => (
                 <Fragment key={message.id}>
-                  {message.parts.map((part, i) => {
+                  {message.parts.map((part: any, i: number) => {
                     switch (part.type) {
                       case "text":
                         return (

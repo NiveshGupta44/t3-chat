@@ -9,7 +9,13 @@ export const useCreateChat = () => {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: (values) => createChatWithMessage(values),
+    mutationFn: async (values: { content: string; model: string }) => {
+      const res = await createChatWithMessage(values);
+      if (!res.success) {
+        throw new Error(res.message);
+      }
+      return res;
+    },
     onSuccess: (res) => {
       if (res.success && res.data) {
         // add optimistic ui
@@ -50,7 +56,7 @@ export const useDeleteChat = () => {
   });
 };
 
-export const useGetChatById = (chatId) => {
+export const useGetChatById = (chatId: string) => {
   return useQuery({
     queryKey: ["chats", chatId],
     queryFn: () => getChatById(chatId)
