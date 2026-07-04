@@ -3,12 +3,17 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import db from "./db";
 
 export const auth = betterAuth({
+    trustedOrigins: [
+    "https://t3-chatbynivesh-iota.vercel.app",
+    
+  ],
     database: prismaAdapter(db, {
         provider: "postgresql",
     }),
     
     baseURL: process.env.BETTER_AUTH_URL,       
-    secret: process.env.BETTER_AUTH_SECRET,      
+    secret: process.env.BETTER_AUTH_SECRET,  
+     
 
     socialProviders: {
         github: {
