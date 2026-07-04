@@ -4,9 +4,8 @@ import db from "./db";
 
 export const auth = betterAuth({
     trustedOrigins: [
-    "https://t3-chatbynivesh-iota.vercel.app",
-    
-  ],
+      "https://*.vercel.app",
+    ],
     database: prismaAdapter(db, {
         provider: "postgresql",
     }),
