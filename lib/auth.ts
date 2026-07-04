@@ -11,7 +11,13 @@ export const auth = betterAuth({
         provider: "postgresql",
     }),
     
-    baseURL: process.env.BETTER_AUTH_URL,       
+    baseURL: {
+        allowedHosts: [
+            "t3-chatbynivesh-iota.vercel.app",
+            "*.vercel.app"
+        ],
+        fallback: process.env.BETTER_AUTH_URL || "https://t3-chatbynivesh-iota.vercel.app"
+    },
     secret: process.env.BETTER_AUTH_SECRET,  
      
 
