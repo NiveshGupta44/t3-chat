@@ -74,9 +74,10 @@ export async function POST(req: Request) {
         ? [newMessages]
         : [];
 
-    // Deduplicate: only add client messages that aren't already in DB
-    const existingIds = new Set(uiMessages.map((m: any) => m.id));
-    const newOnly = normalizedNewMessages.filter((m: any) => !existingIds.has(m.id));
+    // Deduplicate: only add client messages that aren't already in DB (using robust string comparison)
+    const newOnly = normalizedNewMessages.filter(
+      (newMsg: any) => !uiMessages.some((oldMsg: any) => String(oldMsg.id) === String(newMsg.id))
+    );
     const allUIMessages = [...uiMessages, ...newOnly].filter(Boolean);
 
     let modelMessages;
@@ -130,15 +131,19 @@ export async function POST(req: Request) {
 
         try {
           const messagesToSave = [];
+          const latestUserMessage =
+            normalizedNewMessages[normalizedNewMessages.length - 1];
 
-          if (!skipUserMessage) {
-            const latestUserMessage =
-              normalizedNewMessages[normalizedNewMessages.length - 1];
+          const isUserMessageAlreadySaved = latestUserMessage?.id
+            ? previousMessages.some((m: any) => String(m.id) === String(latestUserMessage.id))
+            : false;
 
-            if (latestUserMessage?.role === "user") {
+          if (!skipUserMessage && !isUserMessageAlreadySaved) {
+            if (latestUserMessage?.role === "user" && latestUserMessage?.id) {
               const userPartsJSON = extractPartsAsJSON(latestUserMessage);
 
               messagesToSave.push({
+                id: latestUserMessage.id,
                 chatId,
                 content: userPartsJSON,
                 messageRole: MessageRole.USER,
@@ -156,6 +161,7 @@ export async function POST(req: Request) {
             const assistantPartsJSON = extractPartsAsJSON(responseMessage);
 
             messagesToSave.push({
+              id: responseMessage.id,
               chatId,
               content: assistantPartsJSON,
               messageRole: MessageRole.ASSISTANT,
