@@ -23,6 +23,8 @@ export const createChatWithMessage = async (values: { content: string; model: st
 
     const title = content.slice(0, 50) + (content.length > 50 ? "..." : "");
 
+    const contentJSON = JSON.stringify([{ type: "text", text: content }]);
+
     const chat = await db.chat.create({
       data: {
         title,
@@ -30,7 +32,7 @@ export const createChatWithMessage = async (values: { content: string; model: st
         userId: user.id,
         messages: {
           create: {
-            content,
+            content: contentJSON,
             messageRole: MessageRole.USER,
             messageType: MessageType.NORMAL,
             model,

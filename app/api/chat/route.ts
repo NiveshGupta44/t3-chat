@@ -74,7 +74,10 @@ export async function POST(req: Request) {
         ? [newMessages]
         : [];
 
-    const allUIMessages = [...uiMessages, ...normalizedNewMessages].filter(Boolean);
+    // Deduplicate: only add client messages that aren't already in DB
+    const existingIds = new Set(uiMessages.map((m: any) => m.id));
+    const newOnly = normalizedNewMessages.filter((m: any) => !existingIds.has(m.id));
+    const allUIMessages = [...uiMessages, ...newOnly].filter(Boolean);
 
     let modelMessages;
 
@@ -94,11 +97,30 @@ export async function POST(req: Request) {
 
     console.log("UI Messages:", allUIMessages);
     console.log("Model Messages:", modelMessages);
-    const result = streamText({
-      model: provider.chat(model),
-      messages: modelMessages,
-      system: CHAT_SYSTEM_PROMPT,
-    });
+
+    let result;
+    try {
+      result = streamText({
+        model: provider.chat(model),
+        messages: modelMessages,
+        system: CHAT_SYSTEM_PROMPT,
+      });
+    } catch (streamError: any) {
+      console.error("❌ Stream creation error:", streamError);
+      const statusCode = streamError?.statusCode || streamError?.status || 500;
+      const isRateLimit = statusCode === 429;
+      return new Response(
+        JSON.stringify({
+          error: isRateLimit
+            ? "This model is currently rate-limited. Please try again in a few moments or select a different model."
+            : streamError?.message || "Failed to get AI response",
+        }),
+        {
+          status: statusCode,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
 
     result.consumeStream();
     return result.toUIMessageStreamResponse({

@@ -143,6 +143,7 @@ const ChatWithMessages = ({ chatId, chatData }: Props) => {
       body: {
         chatId,
         model: selectedModel,
+        skipUserMessage: true,
       },
     });
 
