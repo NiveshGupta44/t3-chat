@@ -162,7 +162,7 @@ const ChatSidebar = ({ user, chats = [] }: ChatSidebarProps) => {
     <div className="flex h-full w-64 flex-col border-r border-border bg-sidebar">
       <div className="flex items-center justify-between border-b border-sidebar-border px-4 py-3">
         <div className="flex items-center gap-2">
-          <Image src={"/logo.svg"} alt="Logo" width={100} height={100} />
+          <Image src={"/logo.svg"} alt="Logo" width={100} height={100} suppressHydrationWarning />
         </div>
       </div>
 
