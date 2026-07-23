@@ -18,9 +18,15 @@ interface ChatMessageFormProps {
 const ChatMessageForm = ({ initialMessage, onMessageChange }: ChatMessageFormProps) => {
   const { data: models, isPending } = useAIModels();
 
-  const [selectedModel, setSelectedModel] = useState(models?.models[0]?.id);
+  const [selectedModel, setSelectedModel] = useState<string | undefined>(models?.models?.[0]?.id);
   const [message, setMessage] = useState("");
-  const { mutateAsync, isPending: isChatPending } = useCreateChat();;
+  const { mutateAsync, isPending: isChatPending } = useCreateChat();
+
+  useEffect(() => {
+    if (!selectedModel && models?.models?.length) {
+      setSelectedModel(models.models[0].id);
+    }
+  }, [models, selectedModel]);
 
   useEffect(() => {
     if (initialMessage) {
@@ -32,7 +38,12 @@ const ChatMessageForm = ({ initialMessage, onMessageChange }: ChatMessageFormPro
   const handleSubmit = async (e: React.FormEvent | React.KeyboardEvent) => {
     try {
       e.preventDefault();
-      await mutateAsync({ content: message, model: selectedModel });
+      const activeModel = selectedModel || models?.models?.[0]?.id;
+      if (!activeModel) {
+        toast.error("No AI model selected");
+        return;
+      }
+      await mutateAsync({ content: message, model: activeModel });
       toast.success("Message sent successfully");
     } catch (error) {
       console.error("Error sending message:", error);

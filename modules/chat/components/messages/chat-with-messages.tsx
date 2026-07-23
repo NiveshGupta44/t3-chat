@@ -112,19 +112,21 @@ const ChatWithMessages = ({ chatId, chatData }: Props) => {
     stop,
     regenerate,
     status,
+    error,
   } = useChat({
     messages: initialMessages,
   });
 
 
   useEffect(() => {
-    setSelectedModel(chatData.model);
-  }, [chatData.model]);
+    if (!selectedModel) {
+      const fallback = chatData.model || models?.models?.[0]?.id;
+      if (fallback) setSelectedModel(fallback);
+    }
+  }, [chatData.model, models, selectedModel]);
 
   useEffect(() => {
     if (hasAutoTriggered.current) return;
-
-    if (!selectedModel) return;
 
     if (hasChatBeenTriggered(chatId)) return;
 
@@ -135,6 +137,8 @@ const ChatWithMessages = ({ chatId, chatData }: Props) => {
 
     if (lastMessage.role !== "user") return;
 
+    const modelToUse = selectedModel || chatData.model || models?.models?.[0]?.id || "google/gemini-2.0-flash-lite-001";
+
     hasAutoTriggered.current = true;
 
     markChatAsTriggered(chatId);
@@ -142,8 +146,7 @@ const ChatWithMessages = ({ chatId, chatData }: Props) => {
     regenerate({
       body: {
         chatId,
-        model: selectedModel,
-        skipUserMessage: true,
+        model: modelToUse,
       },
     });
 
@@ -156,6 +159,8 @@ const ChatWithMessages = ({ chatId, chatData }: Props) => {
     shouldAutoTrigger,
     chatId,
     selectedModel,
+    chatData.model,
+    models,
     initialMessages,
     hasChatBeenTriggered,
     markChatAsTriggered,
@@ -166,6 +171,8 @@ const ChatWithMessages = ({ chatId, chatData }: Props) => {
   const handleSubmit = () => {
     if (!input.trim()) return;
 
+    const modelToUse = selectedModel || chatData.model || models?.models?.[0]?.id || "google/gemini-2.0-flash-lite-001";
+
     sendMessage(
       {
         text: input,
@@ -173,7 +180,7 @@ const ChatWithMessages = ({ chatId, chatData }: Props) => {
       {
         body: {
           chatId,
-          model: selectedModel,
+          model: modelToUse,
         },
       }
     );
@@ -182,15 +189,34 @@ const ChatWithMessages = ({ chatId, chatData }: Props) => {
   };
 
   const handleRetry = () => {
-    regenerate();
+    const modelToUse = selectedModel || chatData.model || models?.models?.[0]?.id || "google/gemini-2.0-flash-lite-001";
+    regenerate({
+      body: {
+        chatId,
+        model: modelToUse,
+      },
+    });
   };
 
   const handleStop = () => {
     stop();
   };
 
-  const messageToRender =
-    messages.length > 0 ? messages : initialMessages;
+  const rawMessages = messages.length > 0 ? messages : initialMessages;
+
+  const messageToRender = useMemo(() => {
+    return rawMessages.map((msg: any) => {
+      let parts = msg.parts;
+      if (!parts || !Array.isArray(parts) || parts.length === 0) {
+        if (typeof msg.content === "string" && msg.content.trim() !== "") {
+          parts = [{ type: "text", text: msg.content }];
+        } else {
+          parts = [];
+        }
+      }
+      return { ...msg, parts };
+    });
+  }, [rawMessages]);
 
   return (
     <div className="max-w-4xl mx-auto p-6 relative size-full h-[calc(100vh-4rem)]">
@@ -210,12 +236,13 @@ const ChatWithMessages = ({ chatId, chatData }: Props) => {
                         return (
                           <Message from={message.role} key={`${message.id}-${i}`}>
                             <MessageContent>
-                              <MessageResponse>{part.text}</MessageResponse>
+                              <MessageResponse>{part.text || ""}</MessageResponse>
                             </MessageContent>
                           </Message>
                         );
 
                       case "reasoning":
+                        if (!part.text) return null;
                         return (
                           <Reasoning
                             key={`${message.id}-${i}`}
@@ -236,13 +263,19 @@ const ChatWithMessages = ({ chatId, chatData }: Props) => {
               ))
             )}
 
-            {status === "streaming" && (
-              <div className="flex items-center gap-2 text-muted-foreground">
+            {(status === "streaming" || status === "submitted") && (
+              <div className="flex items-center gap-2 text-muted-foreground py-2">
                 <Spinner />
 
                 <span className="text-sm">
                   AI is thinking...
                 </span>
+              </div>
+            )}
+
+            {(status === "error" || error) && (
+              <div className="p-3 my-2 text-sm rounded-md bg-destructive/10 text-destructive border border-destructive/20">
+                {error?.message || "Failed to generate AI response. Please check model configuration or API keys."}
               </div>
             )}
           </ConversationContent>

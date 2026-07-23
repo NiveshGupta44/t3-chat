@@ -46,9 +46,9 @@ export function ModelSelector({
 
   const isFreeModel = (model: any) => {
     return (
-      model.pricing.prompt === "0" &&
-      model.pricing.completion === "0" &&
-      model.pricing.request === "0"
+      model?.pricing?.prompt === "0" &&
+      model?.pricing?.completion === "0" &&
+      (model?.pricing?.request === undefined || model?.pricing?.request === "0")
     );
   };
 
@@ -61,10 +61,10 @@ export function ModelSelector({
   const filteredModels = (models || []).filter((model: any) => {
     const query = searchQuery.toLowerCase();
     return (
-      model.name.toLowerCase().includes(query) ||
-      model.description.toLowerCase().includes(query) ||
-      model.id.toLowerCase().includes(query) ||
-      model.architecture.modality.toLowerCase().includes(query)
+      model.name?.toLowerCase().includes(query) ||
+      model.description?.toLowerCase().includes(query) ||
+      model.id?.toLowerCase().includes(query) ||
+      model.architecture?.modality?.toLowerCase().includes(query)
     );
   });
   return (

@@ -10,25 +10,30 @@ const provider = createOpenRouter({
 
 function convertStoredMessageToUI(msg: Message) {
   try {
-    const parts = JSON.parse(msg.content);
-    const validParts = parts.filter((part: any) => part.type === "text");
-
-    if (validParts.length === 0) return null;
-
-    return {
-      id: msg.id,
-      role: msg.messageRole.toLowerCase(),
-      parts: validParts,
-      createdAt: msg.createdAt,
-    };
+    const parsed = JSON.parse(msg.content);
+    if (Array.isArray(parsed)) {
+      const validParts = parsed.filter(
+        (part: any) => part && (part.type === "text" || part.type === "reasoning")
+      );
+      if (validParts.length > 0) {
+        return {
+          id: msg.id,
+          role: msg.messageRole.toLowerCase(),
+          parts: validParts,
+          createdAt: msg.createdAt,
+        };
+      }
+    }
   } catch (e) {
-    return {
-      id: msg.id,
-      role: msg.messageRole.toLowerCase(),
-      parts: [{ type: "text", text: msg.content }],
-      createdAt: msg.createdAt,
-    };
+    // Fallback for non-JSON string content
   }
+
+  return {
+    id: msg.id,
+    role: msg.messageRole.toLowerCase(),
+    parts: [{ type: "text", text: msg.content || "" }],
+    createdAt: msg.createdAt,
+  };
 }
 
 function extractPartsAsJSON(message: any) {
@@ -42,6 +47,18 @@ function extractPartsAsJSON(message: any) {
 
 export async function POST(req: Request) {
   try {
+    if (!process.env.OPENROUTER_API_KEY || process.env.OPENROUTER_API_KEY.trim() === "" || process.env.OPENROUTER_API_KEY.includes("your_openrouter_api_key")) {
+      return new Response(
+        JSON.stringify({
+          error: "OPENROUTER_API_KEY is missing or using placeholder in .env.local. Please set a valid OpenRouter API key.",
+        }),
+        {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+
     const body = await req.json();
 
     console.log("Incoming body:", JSON.stringify(body, null, 2));
@@ -53,7 +70,7 @@ export async function POST(req: Request) {
       skipUserMessage,
     } = body;
 
-    // rest of your code...
+    const targetModel = model || "google/gemini-2.0-flash-lite-001";
 
     const previousMessages = chatId
       ? await db.message.findMany({
@@ -74,100 +91,111 @@ export async function POST(req: Request) {
         ? [newMessages]
         : [];
 
-    // Deduplicate: only add client messages that aren't already in DB (using robust string comparison)
-    const newOnly = normalizedNewMessages.filter(
-      (newMsg: any) => !uiMessages.some((oldMsg: any) => String(oldMsg.id) === String(newMsg.id))
-    );
-    const allUIMessages = [...uiMessages, ...newOnly].filter(Boolean);
+    // Deduplicate stored DB messages and incoming client messages by ID
+    const messageMap = new Map<string, any>();
+    for (const msg of uiMessages) {
+      if (msg && msg.id) {
+        messageMap.set(msg.id, msg);
+      }
+    }
+    for (const msg of normalizedNewMessages) {
+      if (msg && msg.id) {
+        messageMap.set(msg.id, msg);
+      }
+    }
+
+    const sanitizedUIMessages = Array.from(messageMap.values()).map((msg: any) => {
+      let parts = msg.parts;
+      if (!Array.isArray(parts) || parts.length === 0) {
+        const textContent = typeof msg.content === "string" ? msg.content : (msg.text || "");
+        parts = [{ type: "text", text: textContent }];
+      }
+
+      const role = String(msg.role || "user").toLowerCase();
+      const validRole = (role === "system" || role === "assistant") ? role : "user";
+
+      return {
+        id: String(msg.id || Date.now()),
+        role: validRole as "user" | "system" | "assistant",
+        parts,
+      };
+    });
 
     let modelMessages;
 
     try {
-      modelMessages = await convertToModelMessages(allUIMessages);
+      modelMessages = await convertToModelMessages(sanitizedUIMessages);
     } catch (conversionError) {
-      modelMessages = allUIMessages
+      console.warn("convertToModelMessages failed, using manual fallback:", conversionError);
+      modelMessages = sanitizedUIMessages
         .map((msg: any) => ({
           role: msg.role,
           content: msg.parts
-            .filter((p: any) => p.type === "text")
+            .filter((p: any) => p && p.type === "text")
             .map((p: any) => p.text)
             .join("\n"),
         }))
         .filter((m: any) => m.content);
     }
 
-    console.log("UI Messages:", allUIMessages);
+    console.log("UI Messages:", sanitizedUIMessages);
     console.log("Model Messages:", modelMessages);
-
-    let result;
-    try {
-      result = streamText({
-        model: provider.chat(model),
-        messages: modelMessages,
-        system: CHAT_SYSTEM_PROMPT,
-      });
-    } catch (streamError: any) {
-      console.error("❌ Stream creation error:", streamError);
-      const statusCode = streamError?.statusCode || streamError?.status || 500;
-      const isRateLimit = statusCode === 429;
-      return new Response(
-        JSON.stringify({
-          error: isRateLimit
-            ? "This model is currently rate-limited. Please try again in a few moments or select a different model."
-            : streamError?.message || "Failed to get AI response",
-        }),
-        {
-          status: statusCode,
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-    }
+    const result = streamText({
+      model: provider.chat(targetModel),
+      messages: modelMessages,
+      system: CHAT_SYSTEM_PROMPT,
+    });
 
     result.consumeStream();
     return result.toUIMessageStreamResponse({
       sendReasoning: true,
-      originalMessages: allUIMessages,
+      originalMessages: sanitizedUIMessages,
       onFinish: async ({ responseMessage }) => {
 
         try {
           const messagesToSave = [];
-          const latestUserMessage =
-            normalizedNewMessages[normalizedNewMessages.length - 1];
 
-          const isUserMessageAlreadySaved = latestUserMessage?.id
-            ? previousMessages.some((m: any) => String(m.id) === String(latestUserMessage.id))
-            : false;
+          if (!skipUserMessage && normalizedNewMessages.length > 0) {
+            const latestUserMessage =
+              normalizedNewMessages[normalizedNewMessages.length - 1];
 
-          if (!skipUserMessage && !isUserMessageAlreadySaved) {
-            if (latestUserMessage?.role === "user" && latestUserMessage?.id) {
-              const userPartsJSON = extractPartsAsJSON(latestUserMessage);
+            if (latestUserMessage?.role === "user") {
+              const isAlreadyInDB = previousMessages.some(
+                (pm: Message) => pm.id === latestUserMessage.id
+              );
 
-              messagesToSave.push({
-                id: latestUserMessage.id,
-                chatId,
-                content: userPartsJSON,
-                messageRole: MessageRole.USER,
-                model,
-                messageType: MessageType.NORMAL,
-              });
+              if (!isAlreadyInDB) {
+                const userPartsJSON = extractPartsAsJSON(latestUserMessage);
+
+                messagesToSave.push({
+                  chatId,
+                  content: userPartsJSON,
+                  messageRole: MessageRole.USER,
+                  model: targetModel,
+                  messageType: MessageType.NORMAL,
+                });
+              }
             }
           }
 
-          const hasRealContent = responseMessage?.parts?.some(
-            (p: any) => p.type === "text" || p.type === "reasoning"
-          );
+          if (responseMessage) {
+            const hasRealContent =
+              responseMessage?.parts?.some(
+                (p: any) => (p.type === "text" || p.type === "reasoning") && p.text
+              ) ||
+              (typeof (responseMessage as any)?.content === "string" && (responseMessage as any).content.trim() !== "");
 
-          if (hasRealContent) {
-            const assistantPartsJSON = extractPartsAsJSON(responseMessage);
+            if (hasRealContent) {
+              const assistantPartsJSON = extractPartsAsJSON(responseMessage);
 
-            messagesToSave.push({
-              id: responseMessage.id,
-              chatId,
-              content: assistantPartsJSON,
-              messageRole: MessageRole.ASSISTANT,
-              model,
-              messageType: MessageType.NORMAL,
-            });
+              messagesToSave.push({
+                chatId,
+                content: assistantPartsJSON,
+                messageRole: MessageRole.ASSISTANT,
+                model: targetModel,
+                messageType: MessageType.NORMAL,
+              });
+            }
           }
 
           if (messagesToSave.length > 0) {

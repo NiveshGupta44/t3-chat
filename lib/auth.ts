@@ -17,7 +17,7 @@ export const auth = betterAuth({
         ],
         fallback: process.env.BETTER_AUTH_URL || "https://t3-chatbynivesh-iota.vercel.app"
     },
-    secret: process.env.BETTER_AUTH_SECRET,  
+    secret: process.env.BETTER_AUTH_SECRET || "t3-chat-default-secret-key-32chars!",  
      
 
     socialProviders: {
