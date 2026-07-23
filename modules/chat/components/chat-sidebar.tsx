@@ -20,6 +20,7 @@ import {
   PlusIcon,
   SearchIcon,
   MenuIcon,
+  PanelLeftCloseIcon,
   EllipsisIcon,
   Trash,
 } from "lucide-react";
@@ -37,7 +38,7 @@ interface ChatSidebarProps {
   chats: ChatWithMessages[];
 }
 const ChatSidebar = ({ user, chats = [] }: ChatSidebarProps) => {
-  const { activeChatId } = useChatStore();
+  const { activeChatId, sidebarOpen, toggleSidebar } = useChatStore();
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -159,11 +160,25 @@ const ChatSidebar = ({ user, chats = [] }: ChatSidebarProps) => {
     ))
   }
   return (
-    <div className="flex h-full w-64 flex-col border-r border-border bg-sidebar">
+    <div
+      className={cn(
+        "fixed inset-y-0 left-0 z-50 flex h-full w-64 flex-col border-r border-border bg-sidebar transition-transform duration-300 ease-in-out lg:static lg:translate-x-0",
+        sidebarOpen ? "translate-x-0" : "-translate-x-full lg:hidden lg:w-0"
+      )}
+    >
       <div className="flex items-center justify-between border-b border-sidebar-border px-4 py-3">
         <div className="flex items-center gap-2">
           <Image src={"/logo.svg"} alt="Logo" width={100} height={100} suppressHydrationWarning />
         </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleSidebar}
+          title="Close sidebar"
+          className="lg:hidden h-8 w-8 hover:bg-sidebar-accent-foreground/10"
+        >
+          <PanelLeftCloseIcon className="h-4 w-4" />
+        </Button>
       </div>
 
       <div className="p-4">

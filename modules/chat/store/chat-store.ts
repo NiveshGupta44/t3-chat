@@ -5,6 +5,7 @@ interface ChatStore {
   activeChatId: string | null;
   messages: any[];
   triggeredChats: Set<string>;
+  sidebarOpen: boolean;
 
   setChats: (chats: any[]) => void;
   setActiveChatId: (chatId: string | null) => void;
@@ -14,6 +15,8 @@ interface ChatStore {
   clearMessages: () => void;
   markChatAsTriggered: (chatId: string) => void;
   hasChatBeenTriggered: (chatId: string) => boolean;
+  setSidebarOpen: (open: boolean) => void;
+  toggleSidebar: () => void;
 }
 
 export const useChatStore = create<ChatStore>((set, get) => ({
@@ -21,6 +24,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   activeChatId: null,
   messages: [],
   triggeredChats: new Set<string>(),
+  sidebarOpen: true,
 
   setChats: (chats) => set({ chats }),
   setActiveChatId: (chatId) => set({ activeChatId: chatId }),
@@ -42,4 +46,7 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   hasChatBeenTriggered: (chatId) => {
     return get().triggeredChats.has(chatId);
   },
+
+  setSidebarOpen: (open) => set({ sidebarOpen: open }),
+  toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
 }));

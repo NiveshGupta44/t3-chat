@@ -1,8 +1,7 @@
-import Header from "@/components/header";
 import { requireAuth } from "@/modules/authentication/actions";
-import ChatSidebar from "@/modules/chat/components/chat-sidebar";
 import React from "react";
 import { getAllChats } from "@/modules/chat/actions";
+import SidebarLayoutWrapper from "@/components/sidebar-layout-wrapper";
 
 const Layout = async ({
   children,
@@ -16,13 +15,9 @@ const Layout = async ({
   const chats = result.success ? result.data ?? [] : [];
 
   return (
-    <div className="flex h-screen overflow-hidden">
-      <ChatSidebar user={session} chats={chats} />
-      <main className="flex-1 overflow-hidden">
-        <Header />
-        {children}
-      </main>
-    </div>
+    <SidebarLayoutWrapper user={session} chats={chats}>
+      {children}
+    </SidebarLayoutWrapper>
   );
 };
 
