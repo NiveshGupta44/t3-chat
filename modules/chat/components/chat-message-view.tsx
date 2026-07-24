@@ -23,7 +23,7 @@ const ChatMessageView = ({ user }: ChatMessageViewProps) => {
 
 
     return (
-        <div className="flex flex-col items-center justify-center h-screen space-y-10">
+        <div className="flex flex-col items-center justify-center h-full space-y-10">
             <ChatWelcomeTabs
                 userName={user?.name}
                 onMessageSelect={handleMessageSelect}
