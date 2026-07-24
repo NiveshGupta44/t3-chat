@@ -17,12 +17,19 @@ export default function SidebarLayoutWrapper({
   const { sidebarOpen, setSidebarOpen } = useChatStore();
 
   useEffect(() => {
-    // Open sidebar on desktop (>= 1024px) by default, close on mobile
-    if (window.innerWidth >= 1024) {
-      setSidebarOpen(true);
-    } else {
-      setSidebarOpen(false);
-    }
+    const handleResize = () => {
+      if (window.innerWidth >= 1024) {
+        setSidebarOpen(true);
+      } else {
+        setSidebarOpen(false);
+      }
+    };
+
+    // Set initial state
+    handleResize();
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [setSidebarOpen]);
 
   return (
